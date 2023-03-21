@@ -35,6 +35,7 @@ const convertSnakeCaseToCamelCase = (dbObject) => {
 //get todos
 app.get("/todos/", async (request, response) => {
   const { status, priority, search_q = "", category } = request.query;
+
   let getTodoQuery;
   if (status !== undefined) {
     const getStatusQuery = `
@@ -93,7 +94,7 @@ app.get("/todos/", async (request, response) => {
           category='${category}'
           AND priority='${priority}';`;
     getTodoQuery = getQuery;
-  } else {
+  } else if (search_q !== undefined) {
     const getSearchQuery = `
         SELECT 
           *
@@ -102,6 +103,9 @@ app.get("/todos/", async (request, response) => {
         WHERE 
           todo LIKE '%${search_q}%'`;
     getTodoQuery = getSearchQuery;
+  } else if (status === undefined) {
+    response.status(400);
+    response.send("Invalid Status");
   }
   const todosArray = await db.all(getTodoQuery);
   response.send(
@@ -213,18 +217,6 @@ app.put("/todos/:todoId/", async (request, response) => {
        id=${todoId}`;
     await db.run(updateQuery);
     response.send("Due Date Updated");
-  } else if (status === undefined) {
-    response.status(400);
-    response.send("Invalid Todo Status");
-  } else if (priority === undefined) {
-    response.status(400);
-    response.send("Invalid Todo Priority");
-  } else if (category === undefined) {
-    response.status(400);
-    response.send("Invalid Todo Category");
-  } else if (dueDate === undefined) {
-    response.status(400);
-    response.send("Invalid Due Date");
   }
 });
 
